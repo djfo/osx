@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+def bool_from_string(bool_string)
+  bool_string != 'false'
+end
+
+def string_from_bool(bool)
+  if bool
+    'true'
+  else
+    'false'
+  end
+end
+
+def get_volume_settings
+  if /output volume:([0-9]+), input volume:([0-9]+), alert volume:([0-9]+), output muted:(false|true)/ =~ `osascript -e 'get volume settings'`
+    {
+      output: $1.to_i,
+      input: $2.to_i,
+      alert: $3.to_i,
+      muted: bool_from_string($4)
+    }
+  end
+end
+
+def set_muted(muted)
+  `osascript -e "set volume output muted #{string_from_bool(muted)}"`
+end
+
+def sleep
+  `pmset sleepnow`
+end
+
+def die(message)
+  $stderr.puts message
+  exit 1
+end
+
+cmd = ARGV.shift
+die 'no command given' if cmd.nil?
+case cmd
+when 'volume-settings'
+  puts get_volume_settings
+when 'mute'
+  set_muted(true)
+when 'unmute'
+  set_muted(false)
+when 'toggle-muted'
+  set_muted(!get_volume_settings[:muted])
+when 'sleep'
+  sleep
+else
+  die "unknown command: #{cmd}"
+end
