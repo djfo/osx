@@ -78,7 +78,7 @@ when 'toggle-muted'
   set_muted(!get_volume_settings[:muted])
 when 'sleep'
   sleep
-when 'airport'
+when 'airport', 'wifi'
   subcmd = ARGV.shift
   case subcmd
   when 'on'
