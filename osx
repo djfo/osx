@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'yaml'
+
 def bool_from_string(bool_string)
   bool_string != 'false'
 end
@@ -31,9 +33,36 @@ def sleep
   `pmset sleepnow`
 end
 
+def get_airport_power(device)
+  if /Wi-Fi Power \([^)]+\): (Off|On)/ =~ `networksetup -getairportpower #{device}`
+    return $1 != 'Off'
+  end
+end
+
+def set_airport_power(device, on)
+  def on_off_from_bool(bool)
+    if bool
+      'on'
+    else
+      'off'
+    end
+  end
+  `networksetup -setairportpower #{device} #{on_off_from_bool(on)}`
+end
+
 def die(message)
   $stderr.puts message
   exit 1
+end
+
+def load_config
+  config = { airport: 'en1' }
+  path = File.expand_path '~/.osx.yaml'
+  if File.exists? path
+    yaml = YAML.load_file path
+    yaml.each { |k, v| config[k.to_sym] = v }
+  end
+  config
 end
 
 cmd = ARGV.shift
@@ -49,6 +78,18 @@ when 'toggle-muted'
   set_muted(!get_volume_settings[:muted])
 when 'sleep'
   sleep
+when 'airport'
+  subcmd = ARGV.shift
+  case subcmd
+  when 'on'
+    set_airport_power(load_config[:airport], true)
+  when 'off'
+    set_airport_power(load_config[:airport], false)
+  when nil
+    puts get_airport_power(load_config[:airport])
+  else
+    die "unknown command: #{cmd} #{subcmd}"
+  end
 else
   die "unknown command: #{cmd}"
 end
