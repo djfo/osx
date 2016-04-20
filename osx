@@ -59,6 +59,10 @@ def set_muted(muted)
   `osascript -e "set volume output muted #{string_from_bool(muted)}"`
 end
 
+def logout
+  `osascript -e 'tell application "System Events" to log out'`
+end
+
 def sleep
   `pmset sleepnow`
 end
@@ -126,6 +130,8 @@ when 'unmute'
   set_muted(false)
 when 'toggle-muted'
   set_muted(!get_volume_settings[:muted])
+when 'logout'
+  logout
 when 'sleep'
   sleep
 when 'lock'
