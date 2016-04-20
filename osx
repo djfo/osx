@@ -63,6 +63,10 @@ def sleep
   `pmset sleepnow`
 end
 
+def lock_screen
+  `pmset displaysleepnow`
+end
+
 def get_airport_power(device)
   if /Wi-Fi Power \([^)]+\): (Off|On)/ =~ `networksetup -getairportpower #{device}`
     return $1 != 'Off'
@@ -124,6 +128,8 @@ when 'toggle-muted'
   set_muted(!get_volume_settings[:muted])
 when 'sleep'
   sleep
+when 'lock'
+  lock_screen
 when 'airport', 'wifi'
   subcmd = ARGV.shift
   case subcmd
