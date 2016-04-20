@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'yaml'
+require 'io/console'
 
 def bool_from_string(bool_string)
   bool_string != 'false'
@@ -14,6 +15,31 @@ def string_from_bool(bool)
   end
 end
 
+def select(values, index)
+  selected = index
+  $stdin.raw do |h|
+    loop do
+      print "\r[#{values[selected]}]"
+      c = h.getch
+      case c
+      when 'j'
+        selected = [values.count - 1, selected + 1].min
+      when 'k'
+        selected = [0, selected - 1].max
+      else
+        case c.codepoints[0]
+        when 0x0d, 0x71
+          break
+        else
+          puts 'bad input'
+        end
+      end
+    end
+  end
+  puts "\nselected value #{values[selected]}"
+  selected
+end
+
 def get_volume_settings
   if /output volume:([0-9]+), input volume:([0-9]+), alert volume:([0-9]+), output muted:(false|true)/ =~ `osascript -e 'get volume settings'`
     {
@@ -23,6 +49,10 @@ def get_volume_settings
       muted: bool_from_string($4)
     }
   end
+end
+
+def set_output_volume(n)
+  `osascript -e 'set volume output volume #{n}'`
 end
 
 def set_muted(muted)
@@ -70,6 +100,22 @@ die 'no command given' if cmd.nil?
 case cmd
 when 'volume-settings'
   puts get_volume_settings
+when 'volume'
+  subcmd = ARGV.shift
+  case subcmd
+  when nil
+    values = (0..10).to_a.map { |x| x*10 }.reverse
+    index = select(values, 10 - get_volume_settings[:output]/10)
+    set_output_volume(values[index])
+  when 'up'
+    set_output_volume([get_volume_settings[:output] + 5, 100].min)
+  when 'down'
+    set_output_volume([get_volume_settings[:output] - 5, 0].max)
+  when 'set'
+    die 'unimplemented'
+  else
+    die "unknown command: #{cmd} #{subcmd}"
+  end
 when 'mute'
   set_muted(true)
 when 'unmute'
