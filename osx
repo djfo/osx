@@ -132,7 +132,7 @@ when 'airport', 'wifi'
   when 'off'
     set_airport_power(load_config[:airport], false)
   when nil
-    puts get_airport_power(load_config[:airport])
+    puts "Wi-Fi power on: #{get_airport_power(load_config[:airport])}"
   else
     die "unknown command: #{cmd} #{subcmd}"
   end
